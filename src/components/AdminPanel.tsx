@@ -20,7 +20,6 @@ interface AdminPanelProps {
   portfolioData: PortfolioData;
   onUpdateSettings: (settings: any) => void;
   onAddSection: (type: SectionType, title: string) => void;
-  onLoadSampleData: () => void;
   onResetToBlank: () => void;
   onImportData: (data: PortfolioData) => void;
   onExitAdmin: () => void;
@@ -30,7 +29,6 @@ export default function AdminPanel({
   portfolioData,
   onUpdateSettings,
   onAddSection,
-  onLoadSampleData,
   onResetToBlank,
   onImportData,
   onExitAdmin
@@ -302,18 +300,6 @@ export default function AdminPanel({
               {/* Advanced Actions inside settings */}
               <div className="pt-3 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex gap-2">
-                  <button 
-                    id="btn-load-sample"
-                    type="button"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to load the professional sample portfolio dataset? This will overwrite current configurations.")) {
-                        onLoadSampleData();
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-gblue-500/10 text-gblue-400 border border-gblue-500/20 hover:bg-gblue-500/20 rounded-lg text-xs font-semibold transition-all"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> Load Sample Dataset
-                  </button>
                   <button 
                     id="btn-reset-blank"
                     type="button"

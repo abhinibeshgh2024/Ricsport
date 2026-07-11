@@ -14,7 +14,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { PortfolioData, PortfolioSection, SectionType } from './types';
-import { blankPortfolioData, samplePortfolioData } from './initialData';
+import { blankPortfolioData } from './initialData';
 
 // Dynamic Components
 import PortfolioHeader from './components/PortfolioHeader';
@@ -31,6 +31,17 @@ export default function App() {
         const parsed = JSON.parse(saved);
         // Ensure critical fields exist
         if (parsed.settings && Array.isArray(parsed.sections)) {
+          // If the saved data contains sample sections, reset to blank portfolio data as requested
+          const hasSampleSections = parsed.sections.some((s: any) => 
+            s.id.startsWith('sec-skills') || 
+            s.id.startsWith('sec-exp') || 
+            s.id.startsWith('sec-proj') || 
+            s.id.startsWith('sec-edu') || 
+            s.id.startsWith('sec-contact')
+          );
+          if (hasSampleSections) {
+            return blankPortfolioData;
+          }
           return parsed;
         }
       } catch (e) {
@@ -214,10 +225,6 @@ export default function App() {
   };
 
   // Bulk loaders for template manipulation
-  const handleLoadSampleData = () => {
-    setPortfolioData(samplePortfolioData);
-  };
-
   const handleResetToBlank = () => {
     setPortfolioData(blankPortfolioData);
   };
@@ -266,7 +273,6 @@ export default function App() {
           portfolioData={portfolioData}
           onUpdateSettings={handleUpdateSettings}
           onAddSection={handleAddSection}
-          onLoadSampleData={handleLoadSampleData}
           onResetToBlank={handleResetToBlank}
           onImportData={handleImportData}
           onExitAdmin={() => setIsAdmin(false)}
@@ -394,16 +400,9 @@ export default function App() {
               {isAdmin && (
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button 
-                    id="btn-empty-load-sample"
-                    onClick={handleLoadSampleData}
-                    className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-gblue-500 hover:bg-gblue-600 text-white text-xs font-bold rounded-full transition-all shadow-sm"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> Load Professional Demo
-                  </button>
-                  <button 
                     id="btn-empty-add-skills"
                     onClick={() => handleAddSection('skills', 'Skills & Tech Stack')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-150 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full transition-all"
+                    className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-gblue-500 hover:bg-gblue-600 text-white text-xs font-bold rounded-full transition-all shadow-sm"
                   >
                     + Add Skills Section
                   </button>
