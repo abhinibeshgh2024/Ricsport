@@ -133,6 +133,29 @@ export const samplePortfolioData: PortfolioData = {
           url: "https://github.com"
         } as any
       ]
+    },
+    {
+      id: "sec-certs-1",
+      type: "certifications",
+      title: "Certifications & Credentials",
+      items: [
+        {
+          id: "cert-1",
+          title: "Google Cloud Certified Associate Cloud Engineer",
+          issuer: "Google Cloud",
+          date: "2024",
+          category: "Cloud Computing",
+          credentialUrl: "https://www.credential.net/..."
+        } as any,
+        {
+          id: "cert-2",
+          title: "Advanced React & Web Architectures",
+          issuer: "Meta",
+          date: "2023",
+          category: "Web Development",
+          credentialUrl: "https://coursera.org/..."
+        } as any
+      ]
     }
   ]
 };

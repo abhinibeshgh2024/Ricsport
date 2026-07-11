@@ -11,10 +11,16 @@ import {
   Github,
   Linkedin,
   LogOut,
-  FolderOpen
+  FolderOpen,
+  Cloud,
+  Check,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { PortfolioData, PortfolioSection, SectionType } from './types';
 import { blankPortfolioData } from './initialData';
+import { db } from './lib/firebase';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // Dynamic Components
 import PortfolioHeader from './components/PortfolioHeader';
@@ -24,33 +30,7 @@ import ItemEditorModal from './components/ItemEditorModal';
 
 export default function App() {
   // 1. Initial State Load
-  const [portfolioData, setPortfolioData] = useState<PortfolioData>(() => {
-    const saved = localStorage.getItem('richa_portfolio_data');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Ensure critical fields exist
-        if (parsed.settings && Array.isArray(parsed.sections)) {
-          // If the saved data contains sample sections, reset to blank portfolio data as requested
-          const hasSampleSections = parsed.sections.some((s: any) => 
-            s.id.startsWith('sec-skills') || 
-            s.id.startsWith('sec-exp') || 
-            s.id.startsWith('sec-proj') || 
-            s.id.startsWith('sec-edu') || 
-            s.id.startsWith('sec-contact')
-          );
-          if (hasSampleSections) {
-            return blankPortfolioData;
-          }
-          return parsed;
-        }
-      } catch (e) {
-        console.error("Failed to parse saved portfolio data", e);
-      }
-    }
-    // Strict blank template on first start
-    return blankPortfolioData;
-  });
+  const [portfolioData, setPortfolioData] = useState<PortfolioData>(blankPortfolioData);
 
   // 2. Control/View States
   const [isAdmin, setIsAdmin] = useState(false);
@@ -63,10 +43,53 @@ export default function App() {
   const [activeItemForModal, setActiveItemForModal] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('home');
 
-  // 4. Save to Local Storage whenever state changes
+  // Firebase loading/sync states
+  const [isFirebaseLoading, setIsFirebaseLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [firebaseError, setFirebaseError] = useState<string | null>(null);
+
+  // 4. Real-time Firebase Synchronization (Loads database for everyone)
+  useEffect(() => {
+    const docRef = doc(db, 'portfolio', 'main');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as PortfolioData;
+        if (data.settings && Array.isArray(data.sections)) {
+          setPortfolioData(data);
+        }
+      } else {
+        // Doc doesn't exist yet, initialize it
+        setDoc(docRef, blankPortfolioData).catch((err) => {
+          console.error("Error creating initial document in Firestore:", err);
+        });
+      }
+      setIsFirebaseLoading(false);
+    }, (error) => {
+      console.error("Firestore subscription error:", error);
+      setFirebaseError(error.message);
+      setIsFirebaseLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 5. Save changes to local cache and Firestore when modified by administrator
   useEffect(() => {
     localStorage.setItem('richa_portfolio_data', JSON.stringify(portfolioData));
-  }, [portfolioData]);
+    
+    if (isAdmin && !isFirebaseLoading) {
+      setIsSyncing(true);
+      const docRef = doc(db, 'portfolio', 'main');
+      setDoc(docRef, portfolioData)
+        .then(() => {
+          setIsSyncing(false);
+        })
+        .catch((error) => {
+          console.error("Firestore write error:", error);
+          setIsSyncing(false);
+        });
+    }
+  }, [portfolioData, isAdmin, isFirebaseLoading]);
 
   // Handle verify passcode
   const handleVerifyPasscode = (e: React.FormEvent) => {
@@ -264,6 +287,21 @@ export default function App() {
     }
   };
 
+  if (isFirebaseLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 animate-fade-in">
+        <div className="flex flex-col items-center max-w-sm text-center">
+          <div className="relative w-16 h-16 mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-gblue-500/10 animate-ping"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-t-gblue-500 border-r-gblue-500/30 border-b-gblue-500/30 border-l-gblue-500/30 animate-spin"></div>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Loading Live Portfolio</h2>
+          <p className="text-sm text-gray-500 mt-2">Connecting securely to Firestore live database...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans transition-all selection:bg-gblue-100 selection:text-gblue-700">
       
@@ -275,7 +313,7 @@ export default function App() {
           onAddSection={handleAddSection}
           onResetToBlank={handleResetToBlank}
           onImportData={handleImportData}
-          onExitAdmin={() => setIsAdmin(false)}
+          isSyncing={isSyncing}
         />
       )}
 
@@ -340,6 +378,16 @@ export default function App() {
               }`}
             >
               Skills
+            </span>
+          )}
+          {portfolioData.sections.some(s => s.type === 'certifications') && (
+            <span 
+              onClick={() => scrollToSection('certifications')}
+              className={`cursor-pointer h-16 flex items-center border-b-2 transition-all hover:text-[#1a73e8] ${
+                activeTab === 'certifications' ? 'text-[#1a73e8] border-[#1a73e8] py-5' : 'border-transparent py-5'
+              }`}
+            >
+              Certifications
             </span>
           )}
           <span 
@@ -416,7 +464,7 @@ export default function App() {
       {/* 3. SUBTLE ADMIN LOGIN ACCESS & COPYRIGHT FOOTER */}
       <footer 
         id="portfolio-footer" 
-        className="bg-white border-t border-gray-200 py-6 md:py-8 px-6 md:px-12 mt-12 transition-all"
+        className={`bg-white border-t border-gray-200 py-6 md:py-8 px-6 md:px-12 mt-12 transition-all ${isAdmin ? 'pb-24 sm:pb-24' : ''}`}
       >
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs md:text-sm text-[#70757a] font-medium">
           <div>
@@ -425,15 +473,7 @@ export default function App() {
           
           <div className="flex items-center gap-4">
             {/* Subtle administrator prompt button */}
-            {isAdmin ? (
-              <button 
-                id="btn-footer-lock"
-                onClick={() => setIsAdmin(false)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gred-50 hover:bg-gred-100 text-[#ea4335] hover:text-gred-650 rounded-full text-xs font-bold transition-all"
-              >
-                <LogOut className="w-3.5 h-3.5" /> Exit Workspace
-              </button>
-            ) : (
+            {!isAdmin && (
               <button 
                 id="btn-footer-edit"
                 onClick={() => {
@@ -512,6 +552,51 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. STICKY BOTTOM ADMIN BAR (Contains real-time save status and Publish button) */}
+      {isAdmin && (
+        <div 
+          id="sticky-admin-bottom-bar"
+          className="fixed bottom-0 left-0 right-0 bg-gray-900/95 border-t border-gray-800 text-white py-4 px-6 md:px-12 shadow-[0_-10px_25px_rgba(0,0,0,0.3)] z-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up"
+        >
+          <div className="flex items-center gap-3 animate-fade-in">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSyncing ? 'bg-gblue-500/20 text-gblue-400' : 'bg-ggreen-500/20 text-ggreen-400'}`}>
+              {isSyncing ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Real-time Cloud Sync</p>
+              <div className="text-sm font-semibold text-white mt-0.5">
+                {isSyncing ? (
+                  <span className="flex items-center gap-1.5">
+                    Saving edits to live database...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-ggreen-400">
+                    All changes synchronized and published!
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-400 font-medium hidden md:inline">
+              Workspace is unlocked • Edits are live instantly
+            </span>
+            <button 
+              id="btn-publish-lock-bottom"
+              onClick={() => setIsAdmin(false)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gred-500 hover:bg-gred-600 text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95"
+            >
+              <Eye className="w-4 h-4" /> Publish & Lock View
+            </button>
           </div>
         </div>
       )}

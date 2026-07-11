@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   GraduationCap, 
   Briefcase, 
@@ -19,7 +19,10 @@ import {
   PlusCircle,
   MoveUp,
   MoveDown,
-  Sparkles
+  Sparkles,
+  Medal,
+  ShieldCheck,
+  X
 } from 'lucide-react';
 import { 
   PortfolioSection, 
@@ -27,7 +30,8 @@ import {
   ExperienceItem, 
   ProjectItem, 
   SkillCategory, 
-  ContactItem 
+  ContactItem,
+  CertificateItem
 } from '../types';
 
 interface SectionRendererProps {
@@ -57,6 +61,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   onMoveItemUp,
   onMoveItemDown
 }) => {
+  const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
   
   // Icon picker for each section type
   const getSectionIcon = (type: string) => {
@@ -71,6 +76,8 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
         return <Award className="w-5 h-5 text-gred-500" />;
       case 'contact':
         return <Mail className="w-5 h-5 text-gblue-500" />;
+      case 'certifications':
+        return <Medal className="w-5 h-5 text-gyellow-600" />;
       default:
         return <Sparkles className="w-5 h-5 text-gblue-500" />;
     }
@@ -83,6 +90,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
       case 'projects': return 'border-l-4 border-gyellow-500';
       case 'skills': return 'border-l-4 border-gred-500';
       case 'contact': return 'border-l-4 border-gblue-500';
+      case 'certifications': return 'border-l-4 border-gyellow-500';
       default: return 'border-l-4 border-gblue-500';
     }
   };
@@ -389,9 +397,98 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
               })()
             )}
 
+            {/* CERTIFICATIONS RENDERER */}
+            {section.type === 'certifications' && (
+              (() => {
+                const cert = item as CertificateItem;
+                return (
+                  <div className="flex flex-col md:flex-row items-start gap-4 pr-16 w-full">
+                    {/* Left side: Certificate Image Preview */}
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-50 rounded-xl border border-gray-200 flex-shrink-0 flex items-center justify-center overflow-hidden relative group/image shadow-xs">
+                      {cert.imageUrl ? (
+                        <>
+                          <img 
+                            src={cert.imageUrl} 
+                            alt={cert.title} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover/image:scale-110 cursor-pointer"
+                            onClick={() => setSelectedCertImage(cert.imageUrl)}
+                          />
+                          <div 
+                            className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 flex items-center justify-center transition-opacity cursor-pointer text-white text-[10px] font-bold"
+                            onClick={() => setSelectedCertImage(cert.imageUrl)}
+                          >
+                            <span>Click to View</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-gray-300 flex flex-col items-center justify-center p-2">
+                          <Medal className="w-8 h-8 text-gray-300 animate-pulse" />
+                          <span className="text-[9px] font-semibold text-gray-400 mt-1 uppercase">No Image</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right side: Certificate Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="inline-block bg-gyellow-50 text-gyellow-600 border border-amber-100 text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-1">
+                            {cert.category || 'General'}
+                          </span>
+                          <h3 className="font-semibold text-gray-900 text-[16px] leading-snug">{cert.title}</h3>
+                          <p className="text-gray-600 font-medium text-sm mt-0.5">{cert.issuer}</p>
+                        </div>
+                        {cert.date && (
+                          <div className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap">
+                            {cert.date}
+                          </div>
+                        )}
+                      </div>
+
+                      {cert.credentialUrl && (
+                        <a 
+                          id={`link-cert-verify-${cert.id}`}
+                          href={cert.credentialUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1 mt-3 text-gblue-500 hover:text-gblue-700 hover:underline text-xs font-semibold"
+                        >
+                          Verify Credential <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+
           </div>
         ))}
       </div>
+
+      {/* Lightbox Modal */}
+      {selectedCertImage && (
+        <div 
+          className="fixed inset-0 bg-black/85 z-55 flex items-center justify-center p-4 backdrop-blur-xs animate-fade-in"
+          onClick={() => setSelectedCertImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-2xl overflow-hidden p-2 shadow-2xl animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedCertImage(null)}
+              className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full transition-colors z-10 shadow-md"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <img 
+              src={selectedCertImage} 
+              alt="Certificate Verification" 
+              className="max-w-full max-h-[80vh] object-contain rounded-xl"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

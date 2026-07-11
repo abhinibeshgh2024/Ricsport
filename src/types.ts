@@ -1,4 +1,14 @@
-export type SectionType = 'education' | 'experience' | 'projects' | 'skills' | 'contact';
+export type SectionType = 'education' | 'experience' | 'projects' | 'skills' | 'contact' | 'certifications';
+
+export interface CertificateItem {
+  id: string;
+  title: string;
+  issuer: string;
+  date?: string;
+  category: string;
+  imageUrl?: string;
+  credentialUrl?: string;
+}
 
 export interface EducationItem {
   id: string;
@@ -46,7 +56,7 @@ export interface PortfolioSection {
   type: SectionType;
   title: string; // Section Display Title (e.g., "My Journey", "Work Experience")
   isOpen?: boolean; // configuration/visibility
-  items: (EducationItem | ExperienceItem | ProjectItem | SkillCategory | ContactItem)[];
+  items: (EducationItem | ExperienceItem | ProjectItem | SkillCategory | ContactItem | CertificateItem)[];
 }
 
 export interface PortfolioSettings {

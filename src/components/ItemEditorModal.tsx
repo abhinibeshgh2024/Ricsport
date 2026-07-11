@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Upload, Image, Trash2, Loader2 } from 'lucide-react';
 import { SectionType } from '../types';
 
 interface ItemEditorModalProps {
@@ -28,6 +28,8 @@ export default function ItemEditorModal({
   const [field4, setField4] = useState(''); // grade / location / projGithub
   const [field5, setField5] = useState(''); // description (edu) / description (exp)
   const [contactType, setContactType] = useState<'email' | 'phone' | 'linkedin' | 'github' | 'twitter' | 'website' | 'other'>('email');
+  const [certificateImage, setCertificateImage] = useState('');
+  const [isImageDragging, setIsImageDragging] = useState(false);
   
   const [error, setError] = useState('');
 
@@ -66,6 +68,13 @@ export default function ItemEditorModal({
         setField3(item.url || '');
         setField4('');
         setField5('');
+      } else if (sectionType === 'certifications') {
+        setField1(item.title || '');
+        setField2(item.issuer || '');
+        setField3(item.date || '');
+        setField4(item.category || '');
+        setField5(item.credentialUrl || '');
+        setCertificateImage(item.imageUrl || '');
       }
       setError('');
     } else {
@@ -76,6 +85,8 @@ export default function ItemEditorModal({
       setField4('');
       setField5('');
       setContactType('email');
+      setCertificateImage('');
+      setIsImageDragging(false);
       setError('');
     }
   }, [item, sectionType, isOpen]);
@@ -113,6 +124,49 @@ export default function ItemEditorModal({
       default:
         break;
     }
+  };
+
+  const handleImageUpload = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 600; // max width/height
+
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // compress to 75% quality JPEG
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          setCertificateImage(dataUrl);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   if (!isOpen) return null;
@@ -199,6 +253,20 @@ export default function ItemEditorModal({
         label: field1.trim() || contactType.toUpperCase(),
         value: field2.trim(),
         url: resolvedUrl
+      };
+    } else if (sectionType === 'certifications') {
+      if (!field2.trim()) {
+        setError('Issuer is required.');
+        return;
+      }
+      payload = {
+        ...payload,
+        title: field1.trim(),
+        issuer: field2.trim(),
+        date: field3.trim(),
+        category: field4.trim() || 'General',
+        credentialUrl: field5.trim(),
+        imageUrl: certificateImage
       };
     }
 
@@ -536,6 +604,153 @@ export default function ItemEditorModal({
                   placeholder="e.g., https://linkedin.com/in/richa (or blank for auto-generation)"
                 />
                 <span className="text-[10px] text-gray-400 block mt-1">If empty, it will be automatically formatted based on contact type.</span>
+              </div>
+            </>
+          )}
+
+          {/* CERTIFICATIONS FORM */}
+          {sectionType === 'certifications' && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Certificate Title *</label>
+                  <input 
+                    id="input-cert-title"
+                    type="text"
+                    required
+                    value={field1}
+                    onChange={(e) => setField1(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-gblue-500 focus:bg-white focus:ring-1 focus:ring-gblue-500 transition-all outline-none"
+                    placeholder="e.g., AWS Certified Solutions Architect"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Issuer *</label>
+                  <input 
+                    id="input-cert-issuer"
+                    type="text"
+                    required
+                    value={field2}
+                    onChange={(e) => setField2(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-gblue-500 focus:bg-white focus:ring-1 focus:ring-gblue-500 transition-all outline-none"
+                    placeholder="e.g., Amazon Web Services"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Date Issued</label>
+                  <input 
+                    id="input-cert-date"
+                    type="text"
+                    value={field3}
+                    onChange={(e) => setField3(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-gblue-500 focus:bg-white focus:ring-1 focus:ring-gblue-500 transition-all outline-none"
+                    placeholder="e.g., May 2024"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Category</label>
+                  <input 
+                    id="input-cert-category"
+                    type="text"
+                    value={field4}
+                    onChange={(e) => setField4(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-gblue-500 focus:bg-white focus:ring-1 focus:ring-gblue-500 transition-all outline-none"
+                    placeholder="e.g., Cloud Computing or Web Development"
+                  />
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {['Cloud Computing', 'Web Development', 'Data Science', 'Security', 'Design'].map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setField4(cat)}
+                        className="text-[10px] font-semibold text-gray-500 bg-gray-100 hover:bg-gblue-50 hover:text-gblue-600 px-2 py-0.5 rounded-md transition-all"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Verification URL</label>
+                <input 
+                  id="input-cert-url"
+                  type="text"
+                  value={field5}
+                  onChange={(e) => setField5(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-gblue-500 focus:bg-white focus:ring-1 focus:ring-gblue-500 transition-all outline-none"
+                  placeholder="e.g., https://credly.com/..."
+                />
+              </div>
+
+              {/* Certificate Image Upload Zone */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Certificate Image / Proof</label>
+                
+                {certificateImage ? (
+                  <div className="relative border border-gray-200 rounded-2xl p-2 bg-gray-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-xl border border-gray-200 bg-white overflow-hidden flex items-center justify-center">
+                        <img 
+                          src={certificateImage} 
+                          alt="Uploaded Certificate Preview" 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-gray-800 block">Certificate Image Added</span>
+                        <span className="text-[10px] text-gray-400">Compressed & ready to sync</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCertificateImage('')}
+                      className="p-2 text-gray-400 hover:text-gred-500 hover:bg-gred-50 rounded-xl transition-all"
+                      title="Remove Image"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div 
+                    className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      isImageDragging 
+                        ? 'border-gblue-500 bg-gblue-50/20' 
+                        : 'border-gray-200 hover:border-gray-300 bg-gray-50/50 hover:bg-gray-50'
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsImageDragging(true);
+                    }}
+                    onDragLeave={() => setIsImageDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsImageDragging(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                    onClick={() => document.getElementById('cert-image-uploader')?.click()}
+                  >
+                    <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                    <span className="text-xs font-bold text-gray-700 block">Drag & drop certificate image here</span>
+                    <span className="text-[10px] text-gray-400 mt-1 block">or click to browse local files (PNG, JPG)</span>
+                    <input 
+                      id="cert-image-uploader"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}
