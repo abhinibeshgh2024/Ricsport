@@ -92,14 +92,13 @@ export default function AdminPanel({
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    if (!passcode.trim()) return;
 
     onUpdateSettings({
       name: name.trim(),
       tagline: tagline.trim(),
       bio: bio.trim(),
       avatarUrl: avatarUrl.trim(),
-      passcode: passcode.trim(),
+      passcode: passcode || 'Richa123',
       accentColor: portfolioData.settings.accentColor || '#1a73e8'
     });
 
@@ -393,37 +392,7 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Security Key Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex justify-between items-center">
-                    <span>Admin Mode Passcode (Custom Security Key)</span>
-                    <button 
-                      id="btn-reveal-code"
-                      type="button" 
-                      onClick={() => setShowPasscode(!showPasscode)}
-                      className="text-[10px] text-gblue-400 hover:underline hover:text-gblue-300"
-                    >
-                      {showPasscode ? 'Hide' : 'Reveal'}
-                    </button>
-                  </label>
-                  <div className="relative">
-                    <input 
-                      id="input-set-passcode"
-                      type={showPasscode ? "text" : "password"}
-                      required
-                      value={passcode}
-                      onChange={(e) => setPasscode(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-9 pr-3.5 py-2 text-sm text-white focus:border-gblue-500 transition-all outline-none"
-                      placeholder="Richa123"
-                    />
-                    <Key className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-3" />
-                  </div>
-                </div>
-                <div className="flex items-center text-xs text-gray-500 px-1 pt-4">
-                  The Admin passcode protects your workspace so only you can unlock the control center. Change it anytime.
-                </div>
-              </div>
+              {/* Passcode / Security configuration removed as requested */}
 
               {/* Advanced Actions inside settings */}
               <div className="pt-3 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">

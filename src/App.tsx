@@ -34,9 +34,6 @@ export default function App() {
 
   // 2. Control/View States
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isPasscodePromptOpen, setIsPasscodePromptOpen] = useState(false);
-  const [passcodeAttempt, setPasscodeAttempt] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
 
   // 3. Modal States for Item Editing
   const [activeSectionForModal, setActiveSectionForModal] = useState<PortfolioSection | null>(null);
@@ -91,20 +88,7 @@ export default function App() {
     }
   }, [portfolioData, isAdmin, isFirebaseLoading]);
 
-  // Handle verify passcode
-  const handleVerifyPasscode = (e: React.FormEvent) => {
-    e.preventDefault();
-    const correctPasscode = portfolioData.settings.passcode || 'Richa123';
-    
-    if (passcodeAttempt === correctPasscode) {
-      setIsAdmin(true);
-      setIsPasscodePromptOpen(false);
-      setPasscodeAttempt('');
-      setPasscodeError('');
-    } else {
-      setPasscodeError('Incorrect passcode. Please try again.');
-    }
-  };
+
 
   // State modification actions: settings
   const handleUpdateSettings = (newSettings: any) => {
@@ -477,8 +461,7 @@ export default function App() {
               <button 
                 id="btn-footer-edit"
                 onClick={() => {
-                  setPasscodeError('');
-                  setIsPasscodePromptOpen(true);
+                  setIsAdmin(true);
                 }}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-50 border border-gray-250 text-gray-700 hover:text-black rounded-lg text-xs font-semibold transition-all shadow-xs"
               >
@@ -492,69 +475,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* 4. PASSCODE DIALOG MODAL (Slide overlay) */}
-      {isPasscodePromptOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in backdrop-blur-xs">
-          <div 
-            id="passcode-prompt-dialog"
-            className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-gray-100 overflow-hidden p-6 transform transition-all animate-scale-up"
-          >
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gblue-50 text-gblue-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-gblue-100">
-                <Lock className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">Administrator Access</h3>
-              <p className="text-gray-500 text-xs mt-1 max-w-xs mx-auto leading-relaxed">
-                Enter your secure passcode to reveal dynamic building controls and edit metadata.
-              </p>
-            </div>
-
-            <form onSubmit={handleVerifyPasscode} className="mt-5 space-y-4">
-              {passcodeError && (
-                <div className="bg-gred-50 text-gred-600 p-2.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{passcodeError}</span>
-                </div>
-              )}
-
-              <div>
-                <input 
-                  id="input-login-passcode"
-                  type="password"
-                  required
-                  autoFocus
-                  placeholder="••••••••"
-                  value={passcodeAttempt}
-                  onChange={(e) => setPasscodeAttempt(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-250 rounded-xl px-4 py-2.5 text-sm text-center focus:border-gblue-500 focus:bg-white focus:ring-1 focus:ring-gblue-500 transition-all outline-none font-mono tracking-widest"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button 
-                  id="btn-login-cancel"
-                  type="button"
-                  onClick={() => {
-                    setIsPasscodePromptOpen(false);
-                    setPasscodeAttempt('');
-                    setPasscodeError('');
-                  }}
-                  className="flex-1 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  id="btn-login-submit"
-                  type="submit"
-                  className="flex-1 py-2 bg-gblue-500 hover:bg-gblue-600 text-white text-sm font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-1"
-                >
-                  Verify <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Passcode prompt removed as requested */}
 
       {/* 5. STICKY BOTTOM ADMIN BAR (Contains real-time save status and Publish button) */}
       {isAdmin && (
