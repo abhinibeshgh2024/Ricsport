@@ -1,0 +1,6 @@
+{
+  "name": "Richa Pandey Portfolio",
+  "description": "A dynamic, Google-styled portfolio builder for Richa Pandey, featuring a hidden admin mode protected by a secure, customizable passcode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

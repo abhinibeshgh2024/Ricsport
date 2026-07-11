@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-gblue-50: #f8fafd;
+  --color-gblue-100: #e8f0fe;
+  --color-gblue-500: #1a73e8;
+  --color-gblue-600: #1557b0;
+  --color-gblue-700: #174ea6;
+  --color-gblue-800: #137333;
+  
+  --color-gred-50: #fce8e6;
+  --color-gred-500: #ea4335;
+  --color-gred-600: #c5221f;
+  
+  --color-gyellow-50: #fef7e0;
+  --color-gyellow-500: #fbbc05;
+  --color-gyellow-600: #b06000;
+  
+  --color-ggreen-50: #e6f4ea;
+  --color-ggreen-500: #34a853;
+  --color-ggreen-600: #137333;
+
+  --color-ggray-50: #f8f9fa;
+  --color-gygray-100: #f1f3f4;
+  --color-ggray-500: #5f6368;
+  --color-ggray-700: #3c4043;
+  --color-ggray-900: #202124;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #f8f9fa; /* Material Light Slate Grey background */
+    color: var(--color-ggray-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-15px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
